@@ -8,6 +8,10 @@
     kubectl_version: "v1.10.1"
     kubectl_download_path: "https://storage.googleapis.com/kubernetes-release/release/{{ kubectl_version }}/bin/linux/amd64"
     kubectl_darwin_download_path: "https://storage.googleapis.com/kubernetes-release/release/{{ kubectl_version }}/bin/darwin/amd64"
+    NAME:
+      wiprocluster.wipjenkins.uk
+    ZONES:
+      us-west-2a,us-west-2b,us-west-2c
   tasks:
     - name: Download Kubectl binaries
       get_url:
@@ -77,20 +81,23 @@
         NAME: wiprocluster.wipjenkins.uk
 
     - name: Echo my_env_var
-      shell: "echo $KOPS_STATE_STORE"
-      environment:
-        KOPS_STATE_STORE: s3://wipro-wipjenkins.uk-state-store
-        
-    - name: Echo my_env_var
       shell: "echo $ZONES"
       environment:
         ZONES: us-west-2a,us-west-2b,us-west-2c
 
     - name: Create cluster
-      command: kops create cluster --node-count 3 --node-zones $ZONES --master-zones $ZONES --dns-zone wipjenkins.uk --node-size m4.large --master-size  m4.large --topology private  --networking weave $${NAME}
+      shell:
+        kops create cluster --node-count 3 --zones "{{ZONES}}" --master-zones "{{ZONES}}" --dns-zone wipjenkins.uk --node-size m4.large --master-size  m4.large --topology private  --networking weave "{{NAME}}"
 
-    - name: update kubernetes cluster
-      command: kops update cluster $NAME --yes
+    - name: Update Cluster
+      shell: kops update cluster "{{NAME}}" --yes
+      register: result
+    - debug:
+        var: result
 
-    - name: Validate cluster
-      command: kops validate cluster $NAME
+    - name: sleep for 300 seconds and continue with play
+      wait_for: timeout=300
+      delegate_to: localhost
+
+    - name: Validate Cluster
+      shell: kops validate cluster "{{NAME}}"
