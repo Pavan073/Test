@@ -87,7 +87,7 @@
         ZONES: us-west-2a,us-west-2b,us-west-2c
 
     - name: Create cluster
-      command: kops create cluster --node-count 3 --zones $ZONES --master-zones $ZONES --dns-zone wipjenkins.uk --node-size m4.large --master-size  m4.large --topology private  --networking weave $${NAME}
+      command: kops create cluster --node-count 3 --node-zones $ZONES --master-zones $ZONES --dns-zone wipjenkins.uk --node-size m4.large --master-size  m4.large --topology private  --networking weave $${NAME}
 
     - name: update kubernetes cluster
       command: kops update cluster $NAME --yes
