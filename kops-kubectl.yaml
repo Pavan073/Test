@@ -36,7 +36,7 @@
         - kubectl
       when: ansible_os_family != 'Darwin'
       become: true
-  
+
     - name: Download Kops binaries
       get_url:
         url: "{{ kops_darwin_download_path }}"
@@ -60,3 +60,37 @@
     # TODO Add hash check
       when: ansible_os_family != 'Darwin'
       become: true
+
+    - name: Adding lines into bashrc file
+      lineinfile:
+        path: ~/.bashrc
+        line: 'NAME=wiprocluster.wipjenkins.uk'
+
+    - name: Adding lines into bashrc file
+      lineinfile:
+        path: ~/.bashrc
+        line: 'ZONES=us-west-2a,us-west-2b,us-west-2c'
+
+    - name: Echo my_env_var
+      shell: "echo $NAME"
+      environment:
+        NAME: wiprocluster.wipjenkins.uk
+
+    - name: Echo my_env_var
+      shell: "echo $KOPS_STATE_STORE"
+      environment:
+        KOPS_STATE_STORE: s3://wipro-wipjenkins.uk-state-store
+        
+    - name: Echo my_env_var
+      shell: "echo $ZONES"
+      environment:
+        ZONES: us-west-2a,us-west-2b,us-west-2c
+
+    - name: Create cluster
+      command: kops create cluster --node-count 3 --zones $ZONES --master-zones $ZONES --dns-zone wipjenkins.uk --node-size m4.large --master-size  m4.large --topology private  --networking weave ${NAME}
+
+    - name: update kubernetes cluster
+      command: kops update cluster $NAME --yes
+
+    - name: Validate cluster
+      command: kops validate cluster $NAME
